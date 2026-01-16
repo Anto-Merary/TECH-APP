@@ -85,6 +85,17 @@ export function ParentInfoForm({
     setIsSubmitting(true);
 
     try {
+      console.log('Submitting form with data:', {
+        name: childName.trim(),
+        age: parseInt(age),
+        email: parentEmail.trim(),
+        phone: parentPhone.trim(),
+        personalityAnswers,
+        logicalAnswers,
+        logicalScore,
+        careerType: prediction.type,
+      });
+
       const result = await saveUserAndQuizResults(
         {
           name: childName.trim(),
@@ -101,20 +112,24 @@ export function ParentInfoForm({
       );
 
       if (!result) {
-        throw new Error('Failed to save data');
+        console.error('saveUserAndQuizResults returned null');
+        throw new Error('Failed to save data to database');
       }
+
+      console.log('Data saved successfully:', result);
 
       toast({
         title: "🎉 Awesome!",
-        description: "Your adventure awaits!",
+        description: "Your results have been saved!",
       });
 
       onComplete();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving quiz result:', error);
+      console.error('Error stack:', error.stack);
       toast({
         title: "Oops!",
-        description: "Something went wrong. Please try again!",
+        description: error.message || "Something went wrong. Please try again!",
         variant: "destructive"
       });
     } finally {

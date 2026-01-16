@@ -29,6 +29,26 @@ export async function saveUserData(userData: UserData): Promise<string | null> {
       throw new Error('Supabase client is not initialized');
     }
 
+    console.log('Saving user data:', {
+      name: userData.name,
+      email: userData.email,
+      age: userData.age,
+    });
+
+    // First, try to get existing user by email
+    const { data: existingUser, error: fetchError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', userData.email)
+      .single();
+
+    // If user exists, return their ID
+    if (existingUser && !fetchError) {
+      console.log('User already exists, using existing ID:', existingUser.id);
+      return existingUser.id;
+    }
+
+    // If user doesn't exist, create new user
     const { data, error } = await supabase
       .from('users')
       .insert({
@@ -43,6 +63,22 @@ export async function saveUserData(userData: UserData): Promise<string | null> {
 
     if (error) {
       console.error('Error saving user data:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      
+      // If it's a unique constraint error, try to get the existing user
+      if (error.code === '23505') { // PostgreSQL unique violation
+        console.log('Email already exists, fetching existing user...');
+        const { data: existing } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', userData.email)
+          .single();
+        
+        if (existing) {
+          return existing.id;
+        }
+      }
+      
       return null;
     }
 
@@ -51,6 +87,7 @@ export async function saveUserData(userData: UserData): Promise<string | null> {
       return null;
     }
 
+    console.log('User data saved successfully:', data.id);
     return data.id;
   } catch (error) {
     console.error('Exception saving user data:', error);
@@ -69,6 +106,19 @@ export async function saveQuizResults(
   quizData: QuizResultData
 ): Promise<string | null> {
   try {
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      return null;
+    }
+
+    console.log('Saving quiz results:', {
+      userId,
+      logicalScore: quizData.logicalScore,
+      careerType: quizData.careerType,
+      personalityAnswersCount: Object.keys(quizData.personalityAnswers).length,
+      logicalAnswersCount: Object.keys(quizData.logicalAnswers).length,
+    });
+
     const { data, error } = await supabase
       .from('quiz_results')
       .insert({
@@ -84,9 +134,16 @@ export async function saveQuizResults(
 
     if (error) {
       console.error('Error saving quiz results:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       return null;
     }
 
+    if (!data) {
+      console.error('No data returned from quiz results insert');
+      return null;
+    }
+
+    console.log('Quiz results saved successfully:', data.id);
     return data.id;
   } catch (error) {
     console.error('Exception saving quiz results:', error);
@@ -104,20 +161,32 @@ export async function saveUserAndQuizResults(
   userData: UserData,
   quizData: QuizResultData
 ): Promise<{ userId: string; quizResultId: string } | null> {
+  console.log('Starting saveUserAndQuizResults:', {
+    userName: userData.name,
+    userEmail: userData.email,
+    logicalScore: quizData.logicalScore,
+    careerType: quizData.careerType,
+  });
+
   // First save user data
   const userId = await saveUserData(userData);
   
   if (!userId) {
+    console.error('Failed to save user data');
     return null;
   }
+
+  console.log('User data saved, userId:', userId);
 
   // Then save quiz results
   const quizResultId = await saveQuizResults(userId, quizData);
   
   if (!quizResultId) {
+    console.error('Failed to save quiz results for userId:', userId);
     return null;
   }
 
+  console.log('Both user and quiz results saved successfully');
   return { userId, quizResultId };
 }
 
