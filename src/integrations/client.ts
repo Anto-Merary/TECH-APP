@@ -5,12 +5,24 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+// Log for debugging (remove in production)
+if (import.meta.env.DEV) {
+  console.log('Environment check:');
+  console.log('  VITE_SUPABASE_URL:', SUPABASE_URL ? `✓ Set (${SUPABASE_URL.substring(0, 30)}...)` : '✗ Missing');
+  console.log('  VITE_SUPABASE_PUBLISHABLE_KEY:', SUPABASE_PUBLISHABLE_KEY ? `✓ Set (${SUPABASE_PUBLISHABLE_KEY.substring(0, 20)}...)` : '✗ Missing');
+  console.log('  All env vars:', import.meta.env);
+}
+
 if (!SUPABASE_URL) {
-  throw new Error('Missing env.VITE_SUPABASE_URL');
+  const error = 'Missing env.VITE_SUPABASE_URL. Please check your .env file.';
+  console.error(error);
+  throw new Error(error);
 }
 
 if (!SUPABASE_PUBLISHABLE_KEY) {
-  throw new Error('Missing env.VITE_SUPABASE_PUBLISHABLE_KEY');
+  const error = 'Missing env.VITE_SUPABASE_PUBLISHABLE_KEY. Please check your .env file.';
+  console.error(error);
+  throw new Error(error);
 }
 
 // Import the supabase client like this:

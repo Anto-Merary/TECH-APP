@@ -191,10 +191,19 @@ export function ResultsTable({ results, isLoading }: ResultsTableProps) {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                 </td>
               </tr>
+            ) : results.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="p-8 text-center text-slate-400 font-nunito">
+                  <div className="flex flex-col items-center gap-2">
+                    <p className="text-lg">No quiz results yet</p>
+                    <p className="text-sm">Complete a quiz to see results here</p>
+                  </div>
+                </td>
+              </tr>
             ) : filteredResults.length === 0 ? (
               <tr>
                 <td colSpan={7} className="p-8 text-center text-slate-400 font-nunito">
-                  No results found
+                  No results match your search
                 </td>
               </tr>
             ) : (

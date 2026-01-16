@@ -70,6 +70,27 @@ export function AdminStats({ results, isLoading }: AdminStatsProps) {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 animate-pulse"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-slate-700"></div>
+              <div className="flex-1">
+                <div className="h-4 bg-slate-700 rounded w-24 mb-2"></div>
+                <div className="h-6 bg-slate-700 rounded w-16"></div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat) => (

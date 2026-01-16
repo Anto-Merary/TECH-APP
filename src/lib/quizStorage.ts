@@ -7,6 +7,7 @@ export interface UserData {
   age: number;
   phone: string;
   email: string;
+  gender?: string | null;
 }
 
 export interface QuizResultData {
@@ -23,6 +24,11 @@ export interface QuizResultData {
  */
 export async function saveUserData(userData: UserData): Promise<string | null> {
   try {
+    if (!supabase) {
+      console.error('Supabase client is not initialized. Check environment variables.');
+      throw new Error('Supabase client is not initialized');
+    }
+
     const { data, error } = await supabase
       .from('users')
       .insert({
@@ -30,12 +36,18 @@ export async function saveUserData(userData: UserData): Promise<string | null> {
         age: userData.age,
         phone: userData.phone,
         email: userData.email,
+        gender: userData.gender || null,
       })
       .select('id')
       .single();
 
     if (error) {
       console.error('Error saving user data:', error);
+      return null;
+    }
+
+    if (!data) {
+      console.error('No data returned from insert');
       return null;
     }
 

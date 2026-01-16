@@ -63,6 +63,7 @@ export type Database = {
           age: number
           created_at: string | null
           email: string
+          gender: string | null
           id: string
           name: string
           phone: string
@@ -72,6 +73,7 @@ export type Database = {
           age: number
           created_at?: string | null
           email: string
+          gender?: string | null
           id?: string
           name: string
           phone: string
@@ -81,6 +83,7 @@ export type Database = {
           age?: number
           created_at?: string | null
           email?: string
+          gender?: string | null
           id?: string
           name?: string
           phone?: string

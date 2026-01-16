@@ -17,24 +17,21 @@ export default function AdminLogin() {
     setIsLoading(true);
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (authError) throw authError;
-
-      // Check if user is in admins table
+      // Check if email and password match in admins table
       const { data: adminData, error: adminError } = await supabase
         .from('admins')
-        .select('email')
-        .eq('email', authData.user.email)
+        .select('email, password')
+        .eq('email', email)
+        .eq('password', password)
         .single();
 
       if (adminError || !adminData) {
-        await supabase.auth.signOut();
-        throw new Error('Access denied. Admin privileges required.');
+        throw new Error('Invalid email or password');
       }
+
+      // Store admin session in localStorage
+      localStorage.setItem('adminEmail', email);
+      localStorage.setItem('adminLoggedIn', 'true');
 
       toast({
         title: "Welcome back!",

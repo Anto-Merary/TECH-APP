@@ -22,23 +22,26 @@ export default function AdminDashboard() {
 
   const checkAdminAccess = async () => {
     try {
-      // Simple admin check - you can enhance this with proper auth later
-      // For now, we'll just check if the user email exists in the admins table
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
+      // Check if admin is logged in via localStorage
+      const adminEmail = localStorage.getItem('adminEmail');
+      const adminLoggedIn = localStorage.getItem('adminLoggedIn');
+
+      if (!adminEmail || adminLoggedIn !== 'true') {
         navigate('/admin');
         return;
       }
 
-      // Check if user is in admins table
+      // Verify the email exists in admins table
       const { data: adminData, error: adminError } = await supabase
         .from('admins')
         .select('email')
-        .eq('email', user.email)
+        .eq('email', adminEmail)
         .single();
 
       if (adminError || !adminData) {
+        // Clear invalid session
+        localStorage.removeItem('adminEmail');
+        localStorage.removeItem('adminLoggedIn');
         toast({
           title: "Access Denied",
           description: "You don't have admin privileges.",
@@ -59,15 +62,23 @@ export default function AdminDashboard() {
   const fetchResults = async () => {
     setIsLoading(true);
     try {
+      console.log('Fetching quiz results...');
+      
       // Fetch quiz results with user data
       const { data: quizData, error: quizError } = await supabase
         .from('quiz_results')
         .select('*')
         .order('completed_at', { ascending: false });
 
-      if (quizError) throw quizError;
+      if (quizError) {
+        console.error('Quiz results error:', quizError);
+        throw quizError;
+      }
+
+      console.log('Quiz results fetched:', quizData?.length || 0);
 
       if (!quizData || quizData.length === 0) {
+        console.log('No quiz results found');
         setResults([]);
         setIsLoading(false);
         return;
@@ -75,6 +86,7 @@ export default function AdminDashboard() {
 
       // Get all unique user IDs
       const userIds = [...new Set(quizData.map((q: any) => q.user_id))];
+      console.log('User IDs to fetch:', userIds.length);
 
       // Fetch all users at once
       const { data: usersData, error: usersError } = await supabase
@@ -82,7 +94,12 @@ export default function AdminDashboard() {
         .select('*')
         .in('id', userIds);
 
-      if (usersError) throw usersError;
+      if (usersError) {
+        console.error('Users error:', usersError);
+        throw usersError;
+      }
+
+      console.log('Users fetched:', usersData?.length || 0);
 
       // Create a map of users by ID for quick lookup
       const usersMap = new Map((usersData || []).map((u: any) => [u.id, u]));
@@ -106,12 +123,13 @@ export default function AdminDashboard() {
         };
       });
 
+      console.log('Transformed data:', transformedData.length);
       setResults(transformedData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching results:', error);
       toast({
         title: "Error",
-        description: "Failed to load quiz results.",
+        description: error.message || "Failed to load quiz results.",
         variant: "destructive",
       });
     } finally {
@@ -119,8 +137,9 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    localStorage.removeItem('adminEmail');
+    localStorage.removeItem('adminLoggedIn');
     navigate('/admin');
   };
 
@@ -183,6 +202,15 @@ export default function AdminDashboard() {
         <div className="mt-8">
           <ResultsTable results={results} isLoading={isLoading} />
         </div>
+
+        {/* Debug Info (remove in production) */}
+        {import.meta.env.DEV && (
+          <div className="mt-8 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+            <p className="text-xs text-slate-400 font-mono">
+              Debug: {results.length} results loaded | Loading: {isLoading ? 'Yes' : 'No'} | Admin: {isAdmin ? 'Yes' : 'No'}
+            </p>
+          </div>
+        )}
       </main>
     </div>
   );
