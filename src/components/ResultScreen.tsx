@@ -1,16 +1,27 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { gsap } from 'gsap';
 import { Button } from './Button';
 import { CareerPrediction } from '@/data/quizData';
 import { Star, RefreshCw, Share2, Trophy, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { ParentInfoForm } from './ParentInfoForm';
 
 interface ResultScreenProps {
   prediction: CareerPrediction;
   onRestart: () => void;
+  personalityAnswers?: Record<string, string>;
+  logicalAnswers?: Record<string, string>;
+  logicalScore?: number;
 }
 
-export function ResultScreen({ prediction, onRestart }: ResultScreenProps) {
+export function ResultScreen({ 
+  prediction, 
+  onRestart,
+  personalityAnswers = {},
+  logicalAnswers = {},
+  logicalScore = 0
+}: ResultScreenProps) {
+  const [showForm, setShowForm] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const emojiRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -140,7 +151,10 @@ export function ResultScreen({ prediction, onRestart }: ResultScreenProps) {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="primary" size="lg" onClick={onRestart}>
+            <Button variant="primary" size="lg" onClick={() => setShowForm(true)}>
+              Save Results
+            </Button>
+            <Button variant="outline" size="lg" onClick={onRestart}>
               <RefreshCw className="w-5 h-5 mr-2" />
               Play Again
             </Button>
@@ -166,6 +180,20 @@ export function ResultScreen({ prediction, onRestart }: ResultScreenProps) {
           🎉 Great job completing the challenge!
         </p>
       </div>
+
+      {showForm && (
+        <ParentInfoForm
+          prediction={prediction}
+          personalityAnswers={personalityAnswers}
+          logicalAnswers={logicalAnswers}
+          logicalScore={logicalScore}
+          completionTime={0}
+          onComplete={() => {
+            setShowForm(false);
+            onRestart();
+          }}
+        />
+      )}
     </div>
   );
 }

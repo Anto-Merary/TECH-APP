@@ -43,6 +43,9 @@ const Index = () => {
         <ResultScreen
           prediction={quiz.careerPrediction}
           onRestart={quiz.resetQuiz}
+          personalityAnswers={quiz.personalityAnswers}
+          logicalAnswers={quiz.logicalAnswers}
+          logicalScore={quiz.logicalScore}
         />
       )}
     </div>
