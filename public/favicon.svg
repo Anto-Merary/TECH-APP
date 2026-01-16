@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="14" fill="url(#g)"/>
+
+  <!-- Brain -->
+  <path d="M22 20c-4 0-7 3-7 7v10c0 4 3 7 7 7h6V20h-6z
+           M42 20c4 0 7 3 7 7v10c0 4-3 7-7 7h-6V20h6z"
+        fill="#ffffff"/>
+
+  <!-- Spark -->
+  <path d="M32 14l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"
+        fill="#fde047"/>
+</svg>
