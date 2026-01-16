@@ -1,26 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/client';
-import { StatsCards } from '@/components/admin/StatsCards';
-import { ResultsTable } from '@/components/admin/ResultsTable';
+import { AdminStats, ResultsTable } from '@/components/admin';
 import { Button } from '@/components/Button';
 import { LogOut, Shield, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import type { QuizResult } from '@/types/admin';
 
-export interface QuizResult {
-  id: string;
-  user_id: string;
-  name: string;
-  age: number;
-  email: string;
-  phone: string;
-  career_type: string | null;
-  logical_score: number;
-  personality_answers: Record<string, any>;
-  logical_answers: Record<string, any>;
-  completed_at: string | null;
-  created_at: string | null;
-}
+export type { QuizResult };
 
 export default function AdminDashboard() {
   const [results, setResults] = useState<QuizResult[]>([]);
@@ -190,7 +177,7 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Stats Overview */}
-        <StatsCards results={results} isLoading={isLoading} />
+        <AdminStats results={results} isLoading={isLoading} />
 
         {/* Results Table */}
         <div className="mt-8">

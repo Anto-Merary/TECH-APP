@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Search, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/Button';
-import type { QuizResult } from '@/pages/AdminDashboard';
+import type { QuizResult } from '@/types/admin';
 
 interface ResultsTableProps {
   results: QuizResult[];
