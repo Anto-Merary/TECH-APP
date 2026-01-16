@@ -4,8 +4,8 @@ import { useEffect, useRef } from 'react';
 import { Button } from './Button';
 import { CareerPrediction } from '@/data/quizData';
 import { User, Mail, Phone, School, Baby, ArrowRight, Sparkles } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { saveUserAndQuizResults } from '@/lib/quizStorage';
 
 interface ParentInfoFormProps {
   prediction: CareerPrediction;
@@ -26,10 +26,8 @@ export function ParentInfoForm({
 }: ParentInfoFormProps) {
   const [childName, setChildName] = useState('');
   const [age, setAge] = useState('');
-  const [parentName, setParentName] = useState('');
   const [parentEmail, setParentEmail] = useState('');
   const [parentPhone, setParentPhone] = useState('');
-  const [schoolName, setSchoolName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const formRef = useRef<HTMLDivElement>(null);
@@ -57,25 +55,54 @@ export function ParentInfoForm({
       return;
     }
 
+    if (!age || parseInt(age) <= 0) {
+      toast({
+        title: "Oops!",
+        description: "Please enter a valid age",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!parentEmail.trim()) {
+      toast({
+        title: "Oops!",
+        description: "Please enter an email address",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!parentPhone.trim()) {
+      toast({
+        title: "Oops!",
+        description: "Please enter a phone number",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from('quiz_results').insert({
-        child_name: childName.trim(),
-        age: age ? parseInt(age) : null,
-        parent_name: parentName.trim() || null,
-        parent_email: parentEmail.trim() || null,
-        parent_phone: parentPhone.trim() || null,
-        school_name: schoolName.trim() || null,
-        career_prediction: prediction.type,
-        personality_answers: personalityAnswers,
-        logical_answers: logicalAnswers,
-        logical_score: logicalScore,
-        completion_time_seconds: completionTime,
-        world_data: null
-      });
+      const result = await saveUserAndQuizResults(
+        {
+          name: childName.trim(),
+          age: parseInt(age),
+          phone: parentPhone.trim(),
+          email: parentEmail.trim(),
+        },
+        {
+          personalityAnswers,
+          logicalAnswers,
+          logicalScore,
+          careerType: prediction.type,
+        }
+      );
 
-      if (error) throw error;
+      if (!result) {
+        throw new Error('Failed to save data');
+      }
 
       toast({
         title: "🎉 Awesome!",
@@ -135,7 +162,7 @@ export function ParentInfoForm({
           <div className="space-y-2">
             <label className="flex items-center gap-2 font-nunito font-semibold text-foreground">
               <Baby className="w-4 h-4 text-secondary" />
-              Age
+              Age *
             </label>
             <input
               type="number"
@@ -145,21 +172,7 @@ export function ParentInfoForm({
               min="3"
               max="15"
               className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground placeholder:text-muted-foreground focus:border-secondary focus:outline-none transition-colors font-nunito"
-            />
-          </div>
-
-          {/* Parent Name */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 font-nunito font-semibold text-foreground">
-              <User className="w-4 h-4 text-primary" />
-              Parent/Guardian Name
-            </label>
-            <input
-              type="text"
-              value={parentName}
-              onChange={(e) => setParentName(e.target.value)}
-              placeholder="Parent or guardian's name"
-              className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none transition-colors font-nunito"
+              required
             />
           </div>
 
@@ -167,14 +180,15 @@ export function ParentInfoForm({
           <div className="space-y-2">
             <label className="flex items-center gap-2 font-nunito font-semibold text-foreground">
               <Mail className="w-4 h-4 text-accent" />
-              Parent Email
+              Email *
             </label>
             <input
               type="email"
               value={parentEmail}
               onChange={(e) => setParentEmail(e.target.value)}
-              placeholder="parent@email.com"
+              placeholder="your@email.com"
               className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none transition-colors font-nunito"
+              required
             />
           </div>
 
@@ -182,29 +196,15 @@ export function ParentInfoForm({
           <div className="space-y-2">
             <label className="flex items-center gap-2 font-nunito font-semibold text-foreground">
               <Phone className="w-4 h-4 text-coral" />
-              Parent Phone
+              Phone Number *
             </label>
             <input
               type="tel"
               value={parentPhone}
               onChange={(e) => setParentPhone(e.target.value)}
-              placeholder="Phone number"
+              placeholder="Your phone number"
               className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground placeholder:text-muted-foreground focus:border-coral focus:outline-none transition-colors font-nunito"
-            />
-          </div>
-
-          {/* School Name */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 font-nunito font-semibold text-foreground">
-              <School className="w-4 h-4 text-sunny" />
-              School Name
-            </label>
-            <input
-              type="text"
-              value={schoolName}
-              onChange={(e) => setSchoolName(e.target.value)}
-              placeholder="Which school do you go to?"
-              className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground placeholder:text-muted-foreground focus:border-sunny focus:outline-none transition-colors font-nunito"
+              required
             />
           </div>
 
