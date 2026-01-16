@@ -1,24 +1,25 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/client';
 import { StatsCards } from '@/components/admin/StatsCards';
 import { ResultsTable } from '@/components/admin/ResultsTable';
 import { Button } from '@/components/Button';
 import { LogOut, Shield, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-interface QuizResult {
+export interface QuizResult {
   id: string;
-  child_name: string;
-  age: number | null;
-  parent_name: string | null;
-  parent_email: string | null;
-  parent_phone: string | null;
-  school_name: string | null;
-  career_prediction: string;
+  user_id: string;
+  name: string;
+  age: number;
+  email: string;
+  phone: string;
+  career_type: string | null;
   logical_score: number;
-  completion_time_seconds: number | null;
-  created_at: string;
+  personality_answers: Record<string, any>;
+  logical_answers: Record<string, any>;
+  completed_at: string | null;
+  created_at: string | null;
 }
 
 export default function AdminDashboard() {
@@ -34,6 +35,8 @@ export default function AdminDashboard() {
 
   const checkAdminAccess = async () => {
     try {
+      // Simple admin check - you can enhance this with proper auth later
+      // For now, we'll just check if the user email exists in the admins table
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
@@ -41,12 +44,14 @@ export default function AdminDashboard() {
         return;
       }
 
-      const { data: hasAdminRole } = await supabase.rpc('has_role', { 
-        _user_id: user.id, 
-        _role: 'admin' 
-      });
+      // Check if user is in admins table
+      const { data: adminData, error: adminError } = await supabase
+        .from('admins')
+        .select('email')
+        .eq('email', user.email)
+        .single();
 
-      if (!hasAdminRole) {
+      if (adminError || !adminData) {
         toast({
           title: "Access Denied",
           description: "You don't have admin privileges.",
@@ -67,13 +72,54 @@ export default function AdminDashboard() {
   const fetchResults = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      // Fetch quiz results with user data
+      const { data: quizData, error: quizError } = await supabase
         .from('quiz_results')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('completed_at', { ascending: false });
 
-      if (error) throw error;
-      setResults(data || []);
+      if (quizError) throw quizError;
+
+      if (!quizData || quizData.length === 0) {
+        setResults([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Get all unique user IDs
+      const userIds = [...new Set(quizData.map((q: any) => q.user_id))];
+
+      // Fetch all users at once
+      const { data: usersData, error: usersError } = await supabase
+        .from('users')
+        .select('*')
+        .in('id', userIds);
+
+      if (usersError) throw usersError;
+
+      // Create a map of users by ID for quick lookup
+      const usersMap = new Map((usersData || []).map((u: any) => [u.id, u]));
+
+      // Transform the data to match our interface
+      const transformedData: QuizResult[] = quizData.map((item: any) => {
+        const user = usersMap.get(item.user_id);
+        return {
+          id: item.id,
+          user_id: item.user_id,
+          name: user?.name || 'Unknown',
+          age: user?.age || 0,
+          email: user?.email || '',
+          phone: user?.phone || '',
+          career_type: item.career_type,
+          logical_score: item.logical_score || 0,
+          personality_answers: item.personality_answers || {},
+          logical_answers: item.logical_answers || {},
+          completed_at: item.completed_at,
+          created_at: item.created_at || user?.created_at,
+        };
+      });
+
+      setResults(transformedData);
     } catch (error) {
       console.error('Error fetching results:', error);
       toast({

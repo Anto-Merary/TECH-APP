@@ -1,52 +1,36 @@
 import { useState } from 'react';
 import { Search, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/Button';
-
-interface QuizResult {
-  id: string;
-  child_name: string;
-  age: number | null;
-  parent_name: string | null;
-  parent_email: string | null;
-  parent_phone: string | null;
-  school_name: string | null;
-  career_prediction: string;
-  logical_score: number;
-  completion_time_seconds: number | null;
-  created_at: string;
-}
+import type { QuizResult } from '@/pages/AdminDashboard';
 
 interface ResultsTableProps {
   results: QuizResult[];
   isLoading: boolean;
 }
 
-type SortField = 'child_name' | 'logical_score' | 'completion_time_seconds' | 'created_at';
+type SortField = 'name' | 'logical_score' | 'completed_at' | 'created_at';
 type SortDirection = 'asc' | 'desc';
 
 const careerLabels: Record<string, string> = {
   scientist: '🔬 Scientist',
   engineer: '⚙️ Engineer',
-  tech_hero: '🤖 Tech Hero',
+  techHero: '🤖 Tech Hero',
   artist: '🎨 Artist',
   doctor: '🏥 Doctor',
   sportsperson: '⚽ Sportsperson',
-  environment_hero: '🌿 Environment Hero',
+  environmentHero: '🌿 Environment Hero',
+  teacher: '👨‍🏫 Teacher',
+  leader: '👑 Leader',
+  entrepreneur: '💼 Entrepreneur',
 };
 
 export function ResultsTable({ results, isLoading }: ResultsTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState<SortField>('created_at');
+  const [sortField, setSortField] = useState<SortField>('completed_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
-  const formatTime = (seconds: number | null): string => {
-    if (!seconds) return '-';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const formatDate = (dateString: string): string => {
+  const formatDate = (dateString: string | null): string => {
+    if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -67,16 +51,22 @@ export function ResultsTable({ results, isLoading }: ResultsTableProps) {
 
   const filteredResults = results
     .filter((r) =>
-      r.child_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.parent_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.school_name?.toLowerCase().includes(searchTerm.toLowerCase())
+      r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (r.career_type && r.career_type.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     .sort((a, b) => {
-      let aVal = a[sortField];
-      let bVal = b[sortField];
+      let aVal: any = a[sortField];
+      let bVal: any = b[sortField];
 
-      if (aVal === null) aVal = sortDirection === 'asc' ? Infinity : -Infinity;
-      if (bVal === null) bVal = sortDirection === 'asc' ? Infinity : -Infinity;
+      if (aVal === null || aVal === undefined) aVal = sortDirection === 'asc' ? Infinity : -Infinity;
+      if (bVal === null || bVal === undefined) bVal = sortDirection === 'asc' ? Infinity : -Infinity;
+
+      if (typeof aVal === 'string') {
+        aVal = aVal.toLowerCase();
+        bVal = bVal.toLowerCase();
+      }
 
       if (sortDirection === 'asc') {
         return aVal > bVal ? 1 : -1;
@@ -87,41 +77,39 @@ export function ResultsTable({ results, isLoading }: ResultsTableProps) {
 
   const exportToCSV = () => {
     const headers = [
-      'Child Name',
+      'Name',
       'Age',
-      'Parent Name',
-      'Parent Email',
-      'Parent Phone',
-      'School',
+      'Email',
+      'Phone',
       'Career Prediction',
-      'Score',
-      'Time (seconds)',
-      'Date',
+      'Logical Score',
+      'Completed At',
+      'Created At',
     ];
 
     const rows = results.map((r) => [
-      r.child_name,
-      r.age || '',
-      r.parent_name || '',
-      r.parent_email || '',
-      r.parent_phone || '',
-      r.school_name || '',
-      r.career_prediction,
-      r.logical_score,
-      r.completion_time_seconds || '',
-      r.created_at,
+      r.name,
+      r.age.toString(),
+      r.email,
+      r.phone,
+      r.career_type || 'N/A',
+      r.logical_score.toString(),
+      r.completed_at || 'N/A',
+      r.created_at || 'N/A',
     ]);
 
     const csvContent = [headers, ...rows]
-      .map((row) => row.map((cell) => `"${cell}"`).join(','))
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
       .join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `quiz-results-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
@@ -142,7 +130,7 @@ export function ResultsTable({ results, isLoading }: ResultsTableProps) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
           <input
             type="text"
-            placeholder="Search by name, school..."
+            placeholder="Search by name, email, phone, career..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-600 bg-slate-700/50 text-white placeholder:text-slate-500 focus:border-primary focus:outline-none transition-colors font-nunito"
@@ -166,18 +154,18 @@ export function ResultsTable({ results, isLoading }: ResultsTableProps) {
             <tr className="border-b border-slate-700 bg-slate-800/50">
               <th
                 className="text-left p-4 font-nunito font-semibold text-slate-300 cursor-pointer hover:text-white transition-colors"
-                onClick={() => handleSort('child_name')}
+                onClick={() => handleSort('name')}
               >
-                Child Name <SortIcon field="child_name" />
+                Name <SortIcon field="name" />
               </th>
               <th className="text-left p-4 font-nunito font-semibold text-slate-300">
                 Age
               </th>
               <th className="text-left p-4 font-nunito font-semibold text-slate-300">
-                Parent
+                Email
               </th>
               <th className="text-left p-4 font-nunito font-semibold text-slate-300">
-                School
+                Phone
               </th>
               <th className="text-left p-4 font-nunito font-semibold text-slate-300">
                 Career
@@ -190,28 +178,22 @@ export function ResultsTable({ results, isLoading }: ResultsTableProps) {
               </th>
               <th
                 className="text-left p-4 font-nunito font-semibold text-slate-300 cursor-pointer hover:text-white transition-colors"
-                onClick={() => handleSort('completion_time_seconds')}
+                onClick={() => handleSort('completed_at')}
               >
-                Time <SortIcon field="completion_time_seconds" />
-              </th>
-              <th
-                className="text-left p-4 font-nunito font-semibold text-slate-300 cursor-pointer hover:text-white transition-colors"
-                onClick={() => handleSort('created_at')}
-              >
-                Date <SortIcon field="created_at" />
+                Completed <SortIcon field="completed_at" />
               </th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={8} className="p-8 text-center text-slate-400">
+                <td colSpan={7} className="p-8 text-center text-slate-400">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                 </td>
               </tr>
             ) : filteredResults.length === 0 ? (
               <tr>
-                <td colSpan={8} className="p-8 text-center text-slate-400 font-nunito">
+                <td colSpan={7} className="p-8 text-center text-slate-400 font-nunito">
                   No results found
                 </td>
               </tr>
@@ -222,23 +204,20 @@ export function ResultsTable({ results, isLoading }: ResultsTableProps) {
                   className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors"
                 >
                   <td className="p-4 font-nunito font-semibold text-white">
-                    {result.child_name}
+                    {result.name}
                   </td>
                   <td className="p-4 font-nunito text-slate-300">
-                    {result.age || '-'}
+                    {result.age}
                   </td>
                   <td className="p-4 font-nunito text-slate-300">
-                    <div>{result.parent_name || '-'}</div>
-                    {result.parent_email && (
-                      <div className="text-sm text-slate-500">{result.parent_email}</div>
-                    )}
+                    {result.email}
                   </td>
                   <td className="p-4 font-nunito text-slate-300">
-                    {result.school_name || '-'}
+                    {result.phone}
                   </td>
                   <td className="p-4 font-nunito">
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-sm bg-slate-700 text-slate-200">
-                      {careerLabels[result.career_prediction] || result.career_prediction}
+                      {result.career_type ? (careerLabels[result.career_type] || result.career_type) : 'N/A'}
                     </span>
                   </td>
                   <td className="p-4 font-fredoka font-bold text-lg">
@@ -252,11 +231,8 @@ export function ResultsTable({ results, isLoading }: ResultsTableProps) {
                       {result.logical_score}/90
                     </span>
                   </td>
-                  <td className="p-4 font-nunito text-slate-300">
-                    {formatTime(result.completion_time_seconds)}
-                  </td>
                   <td className="p-4 font-nunito text-slate-400 text-sm">
-                    {formatDate(result.created_at)}
+                    {formatDate(result.completed_at)}
                   </td>
                 </tr>
               ))

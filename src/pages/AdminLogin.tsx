@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/client';
 import { Button } from '@/components/Button';
 import { Shield, Mail, Lock, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -24,13 +24,14 @@ export default function AdminLogin() {
 
       if (authError) throw authError;
 
-      // Check if user has admin role
-      const { data: roleData, error: roleError } = await supabase
-        .rpc('has_role', { _user_id: authData.user.id, _role: 'admin' });
+      // Check if user is in admins table
+      const { data: adminData, error: adminError } = await supabase
+        .from('admins')
+        .select('email')
+        .eq('email', authData.user.email)
+        .single();
 
-      if (roleError) throw roleError;
-
-      if (!roleData) {
+      if (adminError || !adminData) {
         await supabase.auth.signOut();
         throw new Error('Access denied. Admin privileges required.');
       }
