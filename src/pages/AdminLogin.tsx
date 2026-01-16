@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/client';
 import { Button } from '@/components/Button';
@@ -11,6 +11,33 @@ export default function AdminLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Check if already logged in and redirect to dashboard
+  useEffect(() => {
+    const checkLogin = async () => {
+      const adminEmail = localStorage.getItem('adminEmail');
+      const adminLoggedIn = localStorage.getItem('adminLoggedIn');
+
+      if (adminEmail && adminLoggedIn === 'true') {
+        // Verify the email exists in admins table
+        const { data: adminData, error: adminError } = await supabase
+          .from('admins')
+          .select('email')
+          .eq('email', adminEmail)
+          .single();
+
+        if (!adminError && adminData) {
+          navigate('/admin/dashboard');
+        } else {
+          // Clear invalid session
+          localStorage.removeItem('adminEmail');
+          localStorage.removeItem('adminLoggedIn');
+        }
+      }
+    };
+
+    checkLogin();
+  }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
