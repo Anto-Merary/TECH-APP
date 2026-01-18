@@ -88,9 +88,13 @@ const FrontPage = () => {
         throw new Error("Failed to save user data");
       }
 
-      // Store user ID in localStorage for later use
+      // Store user ID and data in localStorage for later use
       localStorage.setItem("userId", userId);
       localStorage.setItem("userName", formData.name.trim());
+      localStorage.setItem("userEmail", formData.email.trim());
+      localStorage.setItem("userPhone", formData.phone.trim());
+      localStorage.setItem("userAge", formData.age);
+      localStorage.setItem("userGender", formData.gender || "");
 
       toast({
         title: "🎉 Awesome!",

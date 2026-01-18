@@ -4,7 +4,8 @@ import { Button } from './Button';
 import { CareerPrediction } from '@/data/quizData';
 import { Star, RefreshCw, Share2, Trophy, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { ParentInfoForm } from './ParentInfoForm';
+import { useToast } from '@/hooks/use-toast';
+import { saveQuizResults } from '@/lib/quizStorage';
 
 interface ResultScreenProps {
   prediction: CareerPrediction;
@@ -21,13 +22,63 @@ export function ResultScreen({
   logicalAnswers = {},
   logicalScore = 0
 }: ResultScreenProps) {
-  const [showForm, setShowForm] = useState(false);
+  const [isSaving, setIsSaving] = useState(true);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const emojiRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const starsRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
+    // Automatically save quiz results when component mounts
+    const saveResults = async () => {
+      const userId = localStorage.getItem('userId');
+      
+      if (!userId) {
+        console.error('No userId found in localStorage');
+        setIsSaving(false);
+        return;
+      }
+
+      try {
+        console.log('Auto-saving quiz results for userId:', userId);
+        const quizResultId = await saveQuizResults(userId, {
+          personalityAnswers,
+          logicalAnswers,
+          logicalScore,
+          careerType: prediction.type,
+        });
+
+        if (quizResultId) {
+          console.log('Quiz results saved successfully:', quizResultId);
+          setSaveSuccess(true);
+          toast({
+            title: "🎉 Results Saved!",
+            description: "Your quiz results have been saved successfully!",
+          });
+        } else {
+          console.error('Failed to save quiz results');
+          toast({
+            title: "Warning",
+            description: "Results couldn't be saved, but you can still view them!",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('Error auto-saving quiz results:', error);
+        toast({
+          title: "Warning",
+          description: "Results couldn't be saved, but you can still view them!",
+          variant: "destructive"
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
+    saveResults();
+
     // Fire confetti
     const duration = 3000;
     const end = Date.now() + duration;
@@ -81,7 +132,7 @@ export function ResultScreen({
       yoyo: true,
       ease: 'sine.inOut'
     });
-  }, []);
+  }, [personalityAnswers, logicalAnswers, logicalScore, prediction.type, toast]);
 
   return (
     <div 
@@ -151,9 +202,15 @@ export function ResultScreen({
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="primary" size="lg" onClick={() => setShowForm(true)}>
-              Save Results
-            </Button>
+            {isSaving ? (
+              <Button variant="outline" size="lg" disabled>
+                Saving Results...
+              </Button>
+            ) : saveSuccess ? (
+              <Button variant="primary" size="lg" disabled>
+                ✓ Results Saved!
+              </Button>
+            ) : null}
             <Button variant="outline" size="lg" onClick={onRestart}>
               <RefreshCw className="w-5 h-5 mr-2" />
               Play Again
@@ -180,20 +237,6 @@ export function ResultScreen({
           🎉 Great job completing the challenge!
         </p>
       </div>
-
-      {showForm && (
-        <ParentInfoForm
-          prediction={prediction}
-          personalityAnswers={personalityAnswers}
-          logicalAnswers={logicalAnswers}
-          logicalScore={logicalScore}
-          completionTime={0}
-          onComplete={() => {
-            setShowForm(false);
-            onRestart();
-          }}
-        />
-      )}
     </div>
   );
 }
