@@ -52,7 +52,6 @@ export function ResultsTable({ results, isLoading }: ResultsTableProps) {
   const filteredResults = results
     .filter((r) =>
       r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (r.career_type && r.career_type.toLowerCase().includes(searchTerm.toLowerCase()))
     )
@@ -79,7 +78,6 @@ export function ResultsTable({ results, isLoading }: ResultsTableProps) {
     const headers = [
       'Name',
       'Age',
-      'Email',
       'Phone',
       'Career Prediction',
       'Logical Score',
@@ -90,7 +88,6 @@ export function ResultsTable({ results, isLoading }: ResultsTableProps) {
     const rows = results.map((r) => [
       r.name,
       r.age.toString(),
-      r.email,
       r.phone,
       r.career_type || 'N/A',
       r.logical_score.toString(),
@@ -130,7 +127,7 @@ export function ResultsTable({ results, isLoading }: ResultsTableProps) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
           <input
             type="text"
-            placeholder="Search by name, email, phone, career..."
+            placeholder="Search by name, phone, career..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-600 bg-slate-700/50 text-white placeholder:text-slate-500 focus:border-primary focus:outline-none transition-colors font-nunito"
@@ -162,9 +159,6 @@ export function ResultsTable({ results, isLoading }: ResultsTableProps) {
                 Age
               </th>
               <th className="text-left p-4 font-nunito font-semibold text-slate-300">
-                Email
-              </th>
-              <th className="text-left p-4 font-nunito font-semibold text-slate-300">
                 Phone
               </th>
               <th className="text-left p-4 font-nunito font-semibold text-slate-300">
@@ -187,13 +181,13 @@ export function ResultsTable({ results, isLoading }: ResultsTableProps) {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={7} className="p-8 text-center text-slate-400">
+                <td colSpan={6} className="p-8 text-center text-slate-400">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                 </td>
               </tr>
             ) : results.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-8 text-center text-slate-400 font-nunito">
+                <td colSpan={6} className="p-8 text-center text-slate-400 font-nunito">
                   <div className="flex flex-col items-center gap-2">
                     <p className="text-lg">No quiz results yet</p>
                     <p className="text-sm">Complete a quiz to see results here</p>
@@ -202,7 +196,7 @@ export function ResultsTable({ results, isLoading }: ResultsTableProps) {
               </tr>
             ) : filteredResults.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-8 text-center text-slate-400 font-nunito">
+                <td colSpan={6} className="p-8 text-center text-slate-400 font-nunito">
                   No results match your search
                 </td>
               </tr>
@@ -217,9 +211,6 @@ export function ResultsTable({ results, isLoading }: ResultsTableProps) {
                   </td>
                   <td className="p-4 font-nunito text-slate-300">
                     {result.age}
-                  </td>
-                  <td className="p-4 font-nunito text-slate-300">
-                    {result.email}
                   </td>
                   <td className="p-4 font-nunito text-slate-300">
                     {result.phone}

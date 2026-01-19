@@ -12,7 +12,6 @@ const FrontPage = () => {
     name: "",
     age: "",
     gender: "",
-    email: "",
     phone: "",
     grade: "",
     school_name: "",
@@ -47,15 +46,6 @@ const FrontPage = () => {
       return false;
     }
 
-    if (!formData.email.trim() || !formData.email.includes("@")) {
-      toast({
-        title: "Oops!",
-        description: "Please enter a valid email address",
-        variant: "destructive",
-      });
-      return false;
-    }
-
     if (!formData.phone.trim()) {
       toast({
         title: "Oops!",
@@ -81,7 +71,6 @@ const FrontPage = () => {
       const userId = await saveUserData({
         name: formData.name.trim(),
         age: parseInt(formData.age),
-        email: formData.email.trim(),
         phone: formData.phone.trim(),
         gender: formData.gender || null,
         grade: formData.grade.trim() || null,
@@ -95,7 +84,6 @@ const FrontPage = () => {
       // Store user ID and data in localStorage for later use
       localStorage.setItem("userId", userId);
       localStorage.setItem("userName", formData.name.trim());
-      localStorage.setItem("userEmail", formData.email.trim());
       localStorage.setItem("userPhone", formData.phone.trim());
       localStorage.setItem("userAge", formData.age);
       localStorage.setItem("userGender", formData.gender || "");
@@ -190,17 +178,6 @@ const FrontPage = () => {
             <option value="girl">Girl</option>
             <option value="other">Other</option>
           </select>
-
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleInputChange}
-            placeholder="Enter your email"
-            className="w-full px-4 py-2 rounded-lg border border-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
-            required
-            disabled={isSubmitting}
-          />
 
           <input
             type="tel"

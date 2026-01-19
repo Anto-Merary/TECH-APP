@@ -6,7 +6,6 @@ export interface UserData {
   name: string;
   age: number;
   phone: string;
-  email: string;
   gender?: string | null;
   grade?: string | null;
   school_name?: string | null;
@@ -21,7 +20,7 @@ export interface QuizResultData {
 
 /**
  * Save user details to the database
- * @param userData User information (name, age, phone, email)
+ * @param userData User information (name, age, phone)
  * @returns User ID if successful, null if error
  */
 export async function saveUserData(userData: UserData): Promise<string | null> {
@@ -33,15 +32,15 @@ export async function saveUserData(userData: UserData): Promise<string | null> {
 
     console.log('Saving user data:', {
       name: userData.name,
-      email: userData.email,
+      phone: userData.phone,
       age: userData.age,
     });
 
-    // First, try to get existing user by email
+    // First, try to get existing user by phone number
     const { data: existingUser, error: fetchError } = await supabase
       .from('users')
       .select('id')
-      .eq('email', userData.email)
+      .eq('phone', userData.phone)
       .single();
 
     // If user exists, update their information (especially grade and school_name) and return their ID
@@ -79,7 +78,6 @@ export async function saveUserData(userData: UserData): Promise<string | null> {
         name: userData.name,
         age: userData.age,
         phone: userData.phone,
-        email: userData.email,
         gender: userData.gender || null,
         grade: userData.grade || null,
         school_name: userData.school_name || null,
@@ -93,11 +91,11 @@ export async function saveUserData(userData: UserData): Promise<string | null> {
       
       // If it's a unique constraint error, try to get the existing user
       if (error.code === '23505') { // PostgreSQL unique violation
-        console.log('Email already exists, fetching existing user...');
+        console.log('Phone already exists, fetching existing user...');
         const { data: existing } = await supabase
           .from('users')
           .select('id')
-          .eq('email', userData.email)
+          .eq('phone', userData.phone)
           .single();
         
         if (existing) {
@@ -189,7 +187,7 @@ export async function saveUserAndQuizResults(
 ): Promise<{ userId: string; quizResultId: string } | null> {
   console.log('Starting saveUserAndQuizResults:', {
     userName: userData.name,
-    userEmail: userData.email,
+    userPhone: userData.phone,
     logicalScore: quizData.logicalScore,
     careerType: quizData.careerType,
   });
@@ -217,16 +215,16 @@ export async function saveUserAndQuizResults(
 }
 
 /**
- * Get user by email
- * @param email User email
+ * Get user by phone number
+ * @param phone User phone number
  * @returns User data if found, null otherwise
  */
-export async function getUserByEmail(email: string) {
+export async function getUserByPhone(phone: string) {
   try {
     const { data, error } = await supabase
       .from('users')
       .select('*')
-      .eq('email', email)
+      .eq('phone', phone)
       .single();
 
     if (error) {

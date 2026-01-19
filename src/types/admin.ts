@@ -3,7 +3,6 @@ export interface QuizResult {
   user_id: string;
   name: string;
   age: number;
-  email: string;
   phone: string;
   career_type: string | null;
   logical_score: number;

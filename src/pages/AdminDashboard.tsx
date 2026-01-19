@@ -18,6 +18,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     checkAdminAccess();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkAdminAccess = async () => {
@@ -32,7 +33,9 @@ export default function AdminDashboard() {
       }
 
       // Verify the email exists in admins table
-      const { data: adminData, error: adminError } = await supabase
+      // Note: admins table is not in auto-generated types, using type assertion
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: adminData, error: adminError } = await (supabase as any)
         .from('admins')
         .select('email')
         .eq('email', adminEmail)
@@ -85,17 +88,17 @@ export default function AdminDashboard() {
       }
 
       // Get all unique user IDs
-      const userIds = [...new Set(quizData.map((q: any) => q.user_id).filter(Boolean))];
+      const userIds = [...new Set(quizData.map((q) => q.user_id).filter(Boolean))];
       console.log('User IDs to fetch:', userIds.length, userIds);
 
-      let usersMap = new Map();
+      let usersMap = new Map<string, { id: string; name: string; age: number; phone: string; created_at?: string }>();
 
       // Only fetch users if we have user IDs
       if (userIds.length > 0) {
       // Fetch all users at once
       const { data: usersData, error: usersError } = await supabase
         .from('users')
-        .select('*')
+        .select('id, name, age, phone, created_at')
         .in('id', userIds);
 
         if (usersError) {
@@ -107,26 +110,41 @@ export default function AdminDashboard() {
         console.log('Users data:', usersData);
 
       // Create a map of users by ID for quick lookup
-        usersMap = new Map((usersData || []).map((u: any) => [u.id, u]));
+        usersMap = new Map((usersData || []).map((u) => [u.id, u]));
       }
 
       // Transform the data to match our interface
-      const transformedData: QuizResult[] = quizData.map((item: any) => {
+      const transformedData: QuizResult[] = quizData.map((item) => {
         const user = usersMap.get(item.user_id);
         console.log('Processing item:', item.id, 'User found:', !!user);
+        
+        // Safely convert JSONB fields to Record<string, any>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let personalityAnswers: Record<string, any> = {};
+        if (item.personality_answers && typeof item.personality_answers === 'object' && !Array.isArray(item.personality_answers)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          personalityAnswers = item.personality_answers as Record<string, any>;
+        }
+        
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let logicalAnswers: Record<string, any> = {};
+        if (item.logical_answers && typeof item.logical_answers === 'object' && !Array.isArray(item.logical_answers)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          logicalAnswers = item.logical_answers as Record<string, any>;
+        }
+        
         return {
           id: item.id,
           user_id: item.user_id,
           name: user?.name || 'Unknown',
           age: user?.age || 0,
-          email: user?.email || '',
           phone: user?.phone || '',
           career_type: item.career_type,
           logical_score: item.logical_score || 0,
-          personality_answers: item.personality_answers || {},
-          logical_answers: item.logical_answers || {},
+          personality_answers: personalityAnswers,
+          logical_answers: logicalAnswers,
           completed_at: item.completed_at,
-          created_at: item.created_at || user?.created_at,
+          created_at: item.created_at || user?.created_at || null,
         };
       });
 
@@ -140,12 +158,13 @@ export default function AdminDashboard() {
           description: `Loaded ${transformedData.length} quiz result(s)`,
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching results:', error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to load quiz results.";
       console.error('Error details:', JSON.stringify(error, null, 2));
       toast({
         title: "Error",
-        description: error.message || "Failed to load quiz results.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

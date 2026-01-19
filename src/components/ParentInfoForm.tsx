@@ -3,7 +3,7 @@ import { gsap } from 'gsap';
 import { useEffect, useRef } from 'react';
 import { Button } from './Button';
 import { CareerPrediction } from '@/data/quizData';
-import { User, Mail, Phone, Baby, ArrowRight, Sparkles } from 'lucide-react';
+import { User, Phone, Baby, ArrowRight, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { saveUserAndQuizResults } from '@/lib/quizStorage';
 
@@ -26,7 +26,6 @@ export function ParentInfoForm({
 }: ParentInfoFormProps) {
   const [childName, setChildName] = useState('');
   const [age, setAge] = useState('');
-  const [parentEmail, setParentEmail] = useState('');
   const [parentPhone, setParentPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -64,15 +63,6 @@ export function ParentInfoForm({
       return;
     }
 
-    if (!parentEmail.trim()) {
-      toast({
-        title: "Oops!",
-        description: "Please enter an email address",
-        variant: "destructive"
-      });
-      return;
-    }
-
     if (!parentPhone.trim()) {
       toast({
         title: "Oops!",
@@ -88,7 +78,6 @@ export function ParentInfoForm({
       console.log('Submitting form with data:', {
         name: childName.trim(),
         age: parseInt(age),
-        email: parentEmail.trim(),
         phone: parentPhone.trim(),
         personalityAnswers,
         logicalAnswers,
@@ -101,7 +90,6 @@ export function ParentInfoForm({
           name: childName.trim(),
           age: parseInt(age),
           phone: parentPhone.trim(),
-          email: parentEmail.trim(),
         },
         {
           personalityAnswers,
@@ -187,22 +175,6 @@ export function ParentInfoForm({
               min="3"
               max="15"
               className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground placeholder:text-muted-foreground focus:border-secondary focus:outline-none transition-colors font-nunito"
-              required
-            />
-          </div>
-
-          {/* Parent Email */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 font-nunito font-semibold text-foreground">
-              <Mail className="w-4 h-4 text-accent" />
-              Email *
-            </label>
-            <input
-              type="email"
-              value={parentEmail}
-              onChange={(e) => setParentEmail(e.target.value)}
-              placeholder="your@email.com"
-              className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none transition-colors font-nunito"
               required
             />
           </div>
