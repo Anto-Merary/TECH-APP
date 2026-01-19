@@ -14,6 +14,8 @@ const FrontPage = () => {
     gender: "",
     email: "",
     phone: "",
+    grade: "",
+    school_name: "",
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,6 +84,8 @@ const FrontPage = () => {
         email: formData.email.trim(),
         phone: formData.phone.trim(),
         gender: formData.gender || null,
+        grade: formData.grade.trim() || null,
+        school_name: formData.school_name.trim() || null,
       });
 
       if (!userId) {
@@ -95,6 +99,8 @@ const FrontPage = () => {
       localStorage.setItem("userPhone", formData.phone.trim());
       localStorage.setItem("userAge", formData.age);
       localStorage.setItem("userGender", formData.gender || "");
+      localStorage.setItem("userGrade", formData.grade.trim() || "");
+      localStorage.setItem("userSchoolName", formData.school_name.trim() || "");
 
       toast({
         title: "🎉 Awesome!",
@@ -204,6 +210,26 @@ const FrontPage = () => {
             placeholder="Enter your phone number "
             className="w-full px-4 py-2 rounded-lg border border-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
             required
+            disabled={isSubmitting}
+          />
+
+          <input
+            type="text"
+            name="grade"
+            value={formData.grade}
+            onChange={handleInputChange}
+            placeholder="Enter your grade (e.g., 5th, 6th, etc.)"
+            className="w-full px-4 py-2 rounded-lg border border-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
+            disabled={isSubmitting}
+          />
+
+          <input
+            type="text"
+            name="school_name"
+            value={formData.school_name}
+            onChange={handleInputChange}
+            placeholder="Enter your school name"
+            className="w-full px-4 py-2 rounded-lg border border-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
             disabled={isSubmitting}
           />
         </div>

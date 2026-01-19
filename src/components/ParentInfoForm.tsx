@@ -3,7 +3,7 @@ import { gsap } from 'gsap';
 import { useEffect, useRef } from 'react';
 import { Button } from './Button';
 import { CareerPrediction } from '@/data/quizData';
-import { User, Mail, Phone, School, Baby, ArrowRight, Sparkles } from 'lucide-react';
+import { User, Mail, Phone, Baby, ArrowRight, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { saveUserAndQuizResults } from '@/lib/quizStorage';
 

@@ -8,6 +8,8 @@ export interface UserData {
   phone: string;
   email: string;
   gender?: string | null;
+  grade?: string | null;
+  school_name?: string | null;
 }
 
 export interface QuizResultData {
@@ -42,9 +44,31 @@ export async function saveUserData(userData: UserData): Promise<string | null> {
       .eq('email', userData.email)
       .single();
 
-    // If user exists, return their ID
+    // If user exists, update their information (especially grade and school_name) and return their ID
     if (existingUser && !fetchError) {
-      console.log('User already exists, using existing ID:', existingUser.id);
+      console.log('User already exists, updating information:', existingUser.id);
+      
+      // Update user data, especially grade and school_name if provided
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          name: userData.name,
+          age: userData.age,
+          phone: userData.phone,
+          gender: userData.gender || null,
+          grade: userData.grade || null,
+          school_name: userData.school_name || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existingUser.id);
+      
+      if (updateError) {
+        console.error('Error updating existing user:', updateError);
+        // Still return the ID even if update fails
+      } else {
+        console.log('Existing user data updated successfully');
+      }
+      
       return existingUser.id;
     }
 
@@ -57,6 +81,8 @@ export async function saveUserData(userData: UserData): Promise<string | null> {
         phone: userData.phone,
         email: userData.email,
         gender: userData.gender || null,
+        grade: userData.grade || null,
+        school_name: userData.school_name || null,
       })
       .select('id')
       .single();

@@ -25,7 +25,7 @@ export default function AdminDashboard() {
       // Check if admin is logged in via localStorage
       const adminEmail = localStorage.getItem('adminEmail');
       const adminLoggedIn = localStorage.getItem('adminLoggedIn');
-
+      
       if (!adminEmail || adminLoggedIn !== 'true') {
         navigate('/admin');
         return;
@@ -89,14 +89,14 @@ export default function AdminDashboard() {
       console.log('User IDs to fetch:', userIds.length, userIds);
 
       let usersMap = new Map();
-      
+
       // Only fetch users if we have user IDs
       if (userIds.length > 0) {
-        // Fetch all users at once
-        const { data: usersData, error: usersError } = await supabase
-          .from('users')
-          .select('*')
-          .in('id', userIds);
+      // Fetch all users at once
+      const { data: usersData, error: usersError } = await supabase
+        .from('users')
+        .select('*')
+        .in('id', userIds);
 
         if (usersError) {
           console.error('Users error:', usersError);
@@ -106,7 +106,7 @@ export default function AdminDashboard() {
         console.log('Users fetched:', usersData?.length || 0);
         console.log('Users data:', usersData);
 
-        // Create a map of users by ID for quick lookup
+      // Create a map of users by ID for quick lookup
         usersMap = new Map((usersData || []).map((u: any) => [u.id, u]));
       }
 
